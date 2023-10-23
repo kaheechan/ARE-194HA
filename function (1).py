@@ -52,6 +52,7 @@ class Ingestion: # Focus on SPX
 
     # Task: We need Two Bands, One Upper Band and One Lower Band. I coded the Upper Band, and you can do the Lower Band
     def lower_bollinger_twenty(self):
+        LowerBollingerTwenty= self.sma_20() + self
         # Your Code
         # Note: You should subtract the sma_twenty by the std_twenty() * 2
         pass
@@ -59,8 +60,74 @@ class Ingestion: # Focus on SPX
     def ema_twelve(self):
         TwelveDays = self.close_data.ewm(span=12, adjust=False).mean()
         return TwelveDays
+    def ema26(self):
+        TwentysixDays= self.close_data.ewm(span=12, adjust= False).mean()
+        return TwentysixDays
 
+#Strtegy Indicators
+#Moving Average Strategy
+    def moving_average_indicator(self): #data needed for indicator
+        SMA50= self.sma_50()
+        SMA200= self.sma_200()
+    #execute the strategy
+        golden_cross_signal= SMA50>SMA200 #buy signal
+        return golden_cross_signal
+        death_cross_signal = SMA50 < SMA200 #sell signal
+        return death_cross_signal
 
+#RSI Strategy
+    def RSI_indicator(self, period=14): #data needed for indicator
+        close_data= self.close_data()
+        # price differences between each day's closing price
+        # and the previous day's closing price
+        price_diff = close_data.diff(1)
+
+        # Calculate capital gains and losses
+        gains = price_diff.where(price_diff > 0, 0)
+        losses = -price_diff.where(price_diff < 0, 0)
+
+        # Calculate average gains and losses over 14 days (typical measure for this strategy)
+        avg_gain = gains.rolling(window=14).mean()
+        avg_loss = losses.rolling(window=14).mean()
+
+        # Calculate the relative strength (RS)
+        rs = avg_gain / avg_loss
+
+        # Calculate the RSI
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
+
+    def rsi_bollinger_strategy(self):
+        # calculate rsi of stock
+        rsi = self.rsi()
+        # Calculate the lower Bollinger Band based on 20-day
+        #SMA and 2 times the 20 day standard deviation
+        sma20 = self.sma_20()
+        std20 = self.std_twenty()
+        lower_bollinger = sma20 - 2 * std20
+        return lower_bollinger
+
+    #this considers both RSI and Bollinger Bands.
+    def combined_trading_strategy(self):
+        rsi = self.rsi() #calculate's stock rsi from 0 to 100 scale
+        upper_bollinger = self.upper_bollinger_twenty() #calculates upper bollinger band
+        lower_bollinger = self.lower_bollinger_twenty() #calculates lower bollinger band
+
+        trading_actions = [] #stores trading actions/ positions taken
+        in_position = False #track if we're holding a position
+
+        #loop through the stock data to implement both strategies
+        for date, price, rsi_value in zip(rsi.index, self.close_data, rsi):
+            #Buy if stock price is below lower bollinger band AND RSI is 30 or lower
+            if price < lower_bollinger[date] and rsi_value <= 30:
+                if not in_position: #if we're already in a position so we can buy the stock
+                    trading_actions.append((date, "Buy")) #add a buy action
+                    in_position = True # Set to True to indicate we're taking a position
+            elif price> lower_bollinger[date] and rsi_value >= 70: #sell signal
+                if in_position:
+                    trading_actions.append((date, "Sell")) #sell if meets the criteria
+                    in_position = False #updates that we are not in a position
+        return trading_actions
 
 # Inserting Data by Using SQL Database
 @dataclass
