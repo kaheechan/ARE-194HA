@@ -30,15 +30,17 @@ if __name__ == "__main__":
     UBB = IngestionObject.upper_bollinger_twenty()
     LBB = IngestionObject.lower_bollinger_twenty()
 
-    EMA12 = IngestionObject.ema_twelve()
-    EMA26 = IngestionObject.ema_twentysix()
+    EMA13 = IngestionObject.ema_thirteen()
+    EMA25 = IngestionObject.ema_twentyfive()
 
     ATR = IngestionObject.average_true_range()
     CE = IngestionObject.chandelier_exit()
 
+    TSI = IngestionObject.true_strength_index()
+
     # Note: Combine Columns All Together and Rename All the Columns
-    MainColumns = [Date, Price, SMA10, SMA20, SMA50, SMA100, SMA200, EMA12, EMA26, RSI, UBB, LBB, ATR, CE]
-    ColumnNames = ['Date', 'Price', 'SMA10', 'SMA20', 'SMA50', 'SMA100', 'SMA200', 'EMA12', 'EMA26', 'RSI', 'UBB', 'LBB', 'ATR', 'CE']
+    MainColumns = [Date, Price, SMA10, SMA20, SMA50, SMA100, SMA200, EMA13, EMA25, RSI, UBB, LBB, ATR, CE, TSI]
+    ColumnNames = ['Date', 'Price', 'SMA10', 'SMA20', 'SMA50', 'SMA100', 'SMA200', 'EMA13', 'EMA25', 'RSI', 'UBB', 'LBB', 'ATR', 'CE', 'TSI']
     MainDF = pd.concat(MainColumns, axis=1)
     MainDF.columns = ColumnNames if len(MainDF.columns) == len(ColumnNames) else None
 
@@ -49,17 +51,48 @@ if __name__ == "__main__":
     CalculationObject = fx.Calculation(MainDF)
 
     # Tools: To Build The Third Layer
-    GoldenCross = CalculationObject.golen_cross_signal()
-    # DeathCross = CalculationObject.death_cross_signal()
+    GoldenCross = CalculationObject.golden_cross_signal()
+    RSIOverbought = CalculationObject.rsi_overbought()
+    RSIOversold = CalculationObject.rsi_oversold()
+    LowBollingerSignal = CalculationObject.low_bollinger_signal()
+    HighBollingerSignal = CalculationObject.high_bollinger_signal()
+    ChandelierExitLong = CalculationObject.chandelier_exit_long()
+    TSIOverbought = CalculationObject.tsi_overbought()
+    TSIOversold = CalculationObject.rsi_oversold()
 
-    MainColumns = [Date, Price, Low, High, GoldenCross]
-    ColumnNames = ['Date', 'Price', 'Low', 'High', 'GoldenCross']
+    MainColumns = [Date,
+                   Price,
+                   Low,
+                   High,
+                   GoldenCross,
+                   RSIOverbought,
+                   RSIOversold,
+                   LowBollingerSignal,
+                   HighBollingerSignal,
+                   ChandelierExitLong,
+                   TSIOverbought,
+                   TSIOversold]
+
+    ColumnNames = ['Date',
+                   'Price',
+                   'Low',
+                   'High',
+                   'GoldenCross',
+                   'RSIOverbought',
+                   'RSIOversold',
+                   'LowBollingerSignal',
+                   'HighBollingerSignal',
+                   'ChandelierExitLong',
+                   'TSIOverbought',
+                   'TSIOversold']
+
     MainDF = pd.concat(MainColumns, axis=1)
     MainDF.columns = ColumnNames if len(MainDF.columns) == len(ColumnNames) else None
 
     MainDF.to_csv("File/Level3.csv")
+
+    # Forth Tool Box:
+    CombinationObject = fx.Combination(MainDF)
+    
+
     ic(MainDF)
-
-
-
-

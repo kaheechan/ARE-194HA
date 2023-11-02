@@ -77,13 +77,19 @@ class Ingestion: # Focus on SPX
         STDTwenty = self.close_data.rolling(window=20).std()
         return STDTwenty
 
-    def ema_twelve(self):
-        TwelveDays = self.close_data.ewm(span=12, adjust=False).mean()
-        return TwelveDays
+    def ema_thirteen(self, Data=None):
+        if Data is None:
+            ThirteenDays = self.close_data.ewm(span=13, adjust=False).mean()
+        else:
+            ThirteenDays = Data.ewm(span=13, adjust=False).mean()
+        return ThirteenDays
 
-    def ema_twentysix(self):
-        TwentySixDays = self.close_data.ewm(span=12, adjust=False).mean()
-        return TwentySixDays
+    def ema_twentyfive(self, Data=None):
+        if Data is None:
+            TwentyFiveDays = self.close_data.ewm(span=25, adjust=False).mean()
+        else:
+            TwentyFiveDays = Data.ewm(span=25, adjust=False).mean()
+        return TwentyFiveDays
 
     def relative_strength_index(self):
         CloseData = self.close_data
@@ -126,14 +132,21 @@ class Ingestion: # Focus on SPX
         return ChandelierExit
 
     def true_strength_index(self):
-        pass
+        PriceDiff = self.close_data.diff()
+        EMA1 = self.ema_twentyfive(PriceDiff)
+        EMA2 = self.ema_thirteen(EMA1)
+        PriceDiffAbs = PriceDiff.abs()
+        EMA1A = self.ema_twentyfive(PriceDiffAbs)
+        EMA2A = self.ema_thirteen(EMA1A)
+        TSI = EMA2 / EMA2A * 100
+        return TSI
 
 @dataclass
 # Boolean Class
 class Calculation:
     MainDF: pd.DataFrame | pd.Series
 
-    def golen_cross_signal(self):
+    def golden_cross_signal(self):
         SMA50 = self.MainDF['SMA50']
         SMA200 = self.MainDF['SMA200']
 
@@ -147,11 +160,11 @@ class Calculation:
         DeathCrossSignal = SMA50 < SMA200
         return DeathCrossSignal
 
-    def overbought_signal(self):
+    def rsi_overbought(self):
         IsOverbought = self.MainDF['RSI'] > 70
         return IsOverbought
 
-    def oversold_signal(self):
+    def rsi_oversold(self):
         IsOversold = self.MainDF['RSI'] < 30
         return IsOversold
 
@@ -177,5 +190,15 @@ class Calculation:
         ChandelierExitLong = Price < ChandelierExit
         return ChandelierExitLong
 
+    def tsi_overbought(self):
+        IsOverbought = self.MainDF['TSI'] > 25
+        return IsOverbought
+
+    def tsi_oversold(self):
+        IsOversold = self.MainDF['TSI'] < -25
+        return IsOversold
+
 class Combination:
+    MainDF: pd.DataFrame | pd.Series
+
     pass
