@@ -6,6 +6,10 @@ from icecream import ic
 # Goal: Building a House Layer By Layer
 if __name__ == "__main__":
     FilePath = "RawData/AMZN/AMZN.csv"
+    BooleanPath = "File/BooleanTable.csv"
+
+    # Make BooleanTable -> DataFrame
+    BooleanDF = pd.read_csv(BooleanPath)
 
     # First Tool Box:
     PreparationObject = fx.Preparation(FilePath)
@@ -41,7 +45,25 @@ if __name__ == "__main__":
     # Note: Combine Columns All Together and Rename All the Columns
     MainColumns = [Date, Price, SMA10, SMA20, SMA50, SMA100, SMA200, EMA13, EMA25, RSI, UBB, LBB, ATR, CE, TSI]
     ColumnNames = ['Date', 'Price', 'SMA10', 'SMA20', 'SMA50', 'SMA100', 'SMA200', 'EMA13', 'EMA25', 'RSI', 'UBB', 'LBB', 'ATR', 'CE', 'TSI']
-    MainDF = pd.concat(MainColumns, axis=1)
+    MainDF = pd.DataFrame(
+        {
+            "Date": Date,
+            "Price": Price,
+            "SMA10": SMA10,
+            "SMA20": SMA20,
+            "SMA50": SMA50,
+            "SMA100": SMA100,
+            "SMA200": SMA200,
+            "EMA13": EMA13,
+            "EMA25": EMA25,
+            "RSI": RSI,
+            "UBB": UBB,
+            "LBB": LBB,
+            "ATR": ATR,
+            "CE": CE,
+            "TSI": TSI
+        }
+    )
     MainDF.columns = ColumnNames if len(MainDF.columns) == len(ColumnNames) else None
 
     # Note: Make DataFrame to CSV, Processing Data Set, So We Can Visualize Our Data
@@ -54,45 +76,92 @@ if __name__ == "__main__":
     GoldenCross = CalculationObject.golden_cross_signal()
     RSIOverbought = CalculationObject.rsi_overbought()
     RSIOversold = CalculationObject.rsi_oversold()
-    LowBollingerSignal = CalculationObject.low_bollinger_signal()
-    HighBollingerSignal = CalculationObject.high_bollinger_signal()
-    ChandelierExitLong = CalculationObject.chandelier_exit_long()
+    LowBollinger = CalculationObject.low_bollinger_signal()
+    HighBollinger = CalculationObject.high_bollinger_signal()
+    ChandelierExit = CalculationObject.chandelier_exit_long()
     TSIOverbought = CalculationObject.tsi_overbought()
-    TSIOversold = CalculationObject.rsi_oversold()
+    TSIOversold = CalculationObject.tsi_oversold()
 
     MainColumns = [Date,
                    Price,
                    Low,
-                   High,
-                   GoldenCross,
-                   RSIOverbought,
-                   RSIOversold,
-                   LowBollingerSignal,
-                   HighBollingerSignal,
-                   ChandelierExitLong,
-                   TSIOverbought,
-                   TSIOversold]
+                   High]
 
-    ColumnNames = ['Date',
-                   'Price',
-                   'Low',
-                   'High',
-                   'GoldenCross',
-                   'RSIOverbought',
-                   'RSIOversold',
-                   'LowBollingerSignal',
-                   'HighBollingerSignal',
-                   'ChandelierExitLong',
-                   'TSIOverbought',
-                   'TSIOversold']
+    MainColumnNames = ['Date',
+                       'Price',
+                       'Low',
+                       'High']
 
-    MainDF = pd.concat(MainColumns, axis=1)
-    MainDF.columns = ColumnNames if len(MainDF.columns) == len(ColumnNames) else None
+    MainDF = pd.DataFrame(
+        {
+            "Date": Date,
+            "Price": Price,
+            "Low": Low,
+            "High": High
+        }
+    )
 
-    MainDF.to_csv("File/Level3.csv")
+    MainDF.columns = MainColumnNames if len(MainDF.columns) == len(MainColumnNames) else None
+    MainDF.to_csv("File/Level3.csv") # Date Price
+
+    TestColumns = [
+        RSIOverbought,
+        RSIOversold,
+        TSIOverbought,
+        TSIOversold,
+        LowBollinger,
+        HighBollinger,
+        GoldenCross,
+        ChandelierExit
+        ]
+
+    TestColumnNames = [
+        'RSIOverbought',
+        'RSIOversold',
+        'TSIOverbought',
+        'TSIOversold',
+        'LowBollinger',
+        'HighBollinger',
+        'GoldenCross',
+        'ChandelierExit'
+    ]
+
+    # Save to MainDF
+    TestDF = pd.DataFrame(
+        {
+            "RSIOverbought": RSIOverbought,
+            "RSIOversold": RSIOversold,
+            "TSIOverbought": TSIOverbought,
+            "TSIOversold": TSIOversold,
+            "LowBollinger": LowBollinger,
+            "HighBollinger": HighBollinger,
+            "GoldenCross": GoldenCross,
+            "ChandelierExit": ChandelierExit
+        }
+    )
+
+    # Save to TestDF
+    TestDF.columns = TestColumnNames if len(TestDF.columns) == len(TestColumnNames) else None
+    TestDF.to_csv("File/Level4.csv") #
+
+    # ic(TestDF)
 
     # Forth Tool Box:
-    CombinationObject = fx.Combination(MainDF)
-    
+    CombinationObject = fx.Combination(MainDF, TestDF, BooleanDF)
+    OutputData = CombinationObject.convert_output()
+    OutputDF = pd.DataFrame(OutputData)
+    OutputDF = pd.concat([TestDF, OutputDF], axis=1)
+    OutputDF.to_csv("File/Output.csv")
 
-    ic(MainDF)
+    # Debug
+    DebugDF = pd.DataFrame(
+        {
+            "LBB": LBB,
+            "UBB": UBB,
+            "LowBollinger": LowBollinger,
+            "HighBollinger": HighBollinger
+        }
+    )
+
+    print(BooleanDF)
+    DebugDF.to_csv("File/Debug.csv")

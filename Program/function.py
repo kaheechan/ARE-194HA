@@ -1,8 +1,10 @@
+import numpy as np
 import pandas as pd
 import sqlite3 as sq
 from dataclasses import dataclass
 from datetime import datetime
 
+import icecream as ic
 # First Layer of the House
 @dataclass
 class Preparation:
@@ -69,7 +71,7 @@ class Ingestion: # Focus on SPX
         return SMA100
 
     def sma_200(self):
-        SMA200 = self. close_data.rolling(window=200).mean()
+        SMA200 = self.close_data.rolling(window=200).mean()
         return SMA200
 
     # Strategy Two: Mean Reversion
@@ -112,7 +114,7 @@ class Ingestion: # Focus on SPX
 
     # Task: We need Two Bands, One Upper Band and One Lower Band. I coded the Upper Band, and you can do the Lower Band
     def lower_bollinger_twenty(self):
-        LowerBollingerTwenty = self.sma_20() - self.std_twenty()
+        LowerBollingerTwenty = self.sma_20() - self.std_twenty() * 2
         return LowerBollingerTwenty
 
     def average_true_range(self):
@@ -198,7 +200,59 @@ class Calculation:
         IsOversold = self.MainDF['TSI'] < -25
         return IsOversold
 
+@dataclass
 class Combination:
     MainDF: pd.DataFrame | pd.Series
+    TestDF: pd.DataFrame | pd.Series
+    BooleanDF: pd.DataFrame | pd.Series
 
-    pass
+    def __post_init__(self):
+        self.boolean_output = self.BooleanDF[['Hold', 'Buy', 'Sell']]
+        self.boolean_cases = self.BooleanDF.drop(['Hold', 'Buy', 'Sell'], axis=1) # All 256 cases
+
+    def convert_tuple(self):
+        Data = np.array(self.boolean_cases, dtype=bool)
+        return tuple(map(tuple, Data))
+
+    def convert_list(self):
+        Data = np.array(self.boolean_output)
+        return tuple(map(tuple, Data))
+
+    def convert_dict(self):
+        Dict = {}
+        BooleanOutput = self.convert_list()
+        BooleanCases = self.convert_tuple()
+        for Output, Case in zip(BooleanOutput, BooleanCases):
+            Dict[Case] = Output
+        return Dict
+
+    def convert_output(self):
+        TestOutputs = []
+        Mapping = self.convert_dict()
+        Cases = self.TestDF
+        for Index, Value in Cases.iterrows():
+            Test = tuple(Value)
+            TestOutput = Mapping.get(Test, "Invalid Output")
+            TestOutputs.append(TestOutput)
+        return TestOutputs
+
+    # def __post_init__(self):
+    #     TestColumnNames = self.TestDF.columns
+    #     FirstColumn = self.TestDF[TestColumnNames[0]].apply(lambda x: '1' if x else '0')
+    #     for ColumnName in TestColumnNames[1:]:
+    #         FirstColumn += self.TestDF[ColumnName].apply(lambda x: '1' if x else '0')
+    #     self.combined_column = FirstColumn.astype(int)
+    #
+    # def decode_boolean(self):
+    #     CombinedColumn = self.combined_column.apply(lambda x: int(str(x), 2))
+    #     return CombinedColumn
+    #
+    # # Use .iloc -> BooleanDF Result
+    # def decode_execution(self):
+    #     CombinedColumn = self.decode_boolean()
+    #     DecisionMatrix = self.BooleanDF[['Hold', 'Buy', 'Sell']]
+    #     Executions = []
+    #     for TestValue in CombinedColumn:
+    #         print(TestValue)
+    #
+    #     return Executions
